@@ -248,12 +248,14 @@ class CaseHOLDProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir):
         """See base class."""
+        raise NotImplementedError
         logger.info("LOOKING AT {} test".format(data_dir))
         return self._create_examples(self._read_csv(os.path.join(data_dir, "test.csv")), "test")
 
     def get_all_examples(self, data_dir):
         logger.info("LOOKING AT {} all".format(data_dir))
-        return self._create_examples(self._read_csv(os.path.join(data_dir, "all.csv")), "full")
+        return self._create_examples(self._read_csv(os.path.join(data_dir, "casehold.csv")), "full")
+        #return self._create_examples(self._read_csv(os.path.join(data_dir, "all.csv")), "full")
 
     def get_labels(self):
         """See base class."""

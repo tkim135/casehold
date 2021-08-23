@@ -1,0 +1,19 @@
+python3 multiple_choice/run_multiple_choice.py \
+  --task_name casehold \
+  --model_name_or_path gpt2 \
+  --data_dir data/casehold \
+  --do_train \
+  --do_eval \
+  --evaluation_strategy steps \
+  --max_seq_length 128 \
+  --per_device_train_batch_size=16 \
+  --learning_rate=5e-6 \
+  --num_train_epochs=3.0 \
+  --output_dir logs/casehold/gpt \
+  --overwrite_output_dir \
+  --logging_steps 1 \
+  --gradient_accumulation_steps 64 \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
+  --evaluation_strategy steps \
+  --eval_steps 5000

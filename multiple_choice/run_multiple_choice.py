@@ -14,6 +14,7 @@ import transformers
 from transformers import (
 	AutoConfig,
 	AutoModelForMultipleChoice,
+        AutoModelForSequenceClassification,
 	AutoTokenizer,
 	EvalPrediction,
 	HfArgumentParser,
@@ -21,9 +22,10 @@ from transformers import (
 	TrainingArguments,
 	set_seed,
 )
+from legal_trainer import LegalTrainer
 from transformers.trainer_utils import is_main_process
 from utils_multiple_choice import MultipleChoiceDataset, Split, processors
-
+from downstream import GPT2ForMultipleChoice
 
 logger = logging.getLogger(__name__)
 
@@ -133,13 +135,19 @@ def main():
 		# Default fast tokenizer is buggy on CaseHOLD task, switch to legacy tokenizer
 		use_fast=False,
 	)
-	model = AutoModelForMultipleChoice.from_pretrained(
+	#model = AutoModelForMultipleChoice.from_pretrained(
+	#	model_args.model_name_or_path,
+	#	from_tf=bool(".ckpt" in model_args.model_name_or_path),
+	#	config=config,
+	#	cache_dir=model_args.cache_dir,
+	#)
+	tokenizer.pad_token = tokenizer.eos_token
+	model = GPT2ForMultipleChoice.from_pretrained(
 		model_args.model_name_or_path,
 		from_tf=bool(".ckpt" in model_args.model_name_or_path),
 		config=config,
-		cache_dir=model_args.cache_dir,
-	)
-
+		cache_dir=model_args.cache_dir,)
+	model.config.pad_token_id = model.config.eos_token_id
 	train_dataset = None
 	eval_dataset = None
 
@@ -148,7 +156,7 @@ def main():
 	# If ptl=True passed, default to computing pre-train loss, otherwise do training/evaluation/prediction
 	if not custom_args.ptl:
 		# If do_train passed, train_dataset by default loads train split from file named train.csv in data directory
-		if training_args.do_train:
+		if training_args.do_train: 
 			train_dataset = \
 				MultipleChoiceDataset(
 					data_dir=data_args.data_dir,

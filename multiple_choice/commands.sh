@@ -1,0 +1,14 @@
+python multiple_choice/run_multiple_choice.py \
+  --task_name casehold \
+  --model_name_or_path zlucia/legalbert \
+  --data_dir data/casehold \
+  --do_train \
+  --do_eval \
+  --evaluation_strategy steps \
+  --max_seq_length 128 \
+  --per_device_train_batch_size=16 \
+  --learning_rate=5e-6 \
+  --num_train_epochs=3.0 \
+  --output_dir logs/casehold/legalbert \
+  --overwrite_output_dir \
+  --logging_steps 1000
