@@ -1,4 +1,4 @@
-python3 multiple_choice/run_multiple_choice.py \
+python3 multiple_choice/run_mc_seq2seq.py \
   --task_name casehold \
   --model_name_or_path gpt2 \
   --data_dir data/casehold \
