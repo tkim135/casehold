@@ -6,11 +6,11 @@ python3 multiple_choice/run_mc_legaltrainer.py \
   --do_eval \
   --evaluation_strategy steps \
   --max_seq_length 128 \
-  --per_device_train_batch_size=16 \
-  --learning_rate=5e-6 \
-  --num_train_epochs=3.0 \
+  --learning_rate 5e-6 \
+  --num_train_epochs 3.0 \
   --output_dir logs/casehold/gpt \
   --overwrite_output_dir \
+  --overwrite_cache False \
   --logging_steps 1 \
   --gradient_accumulation_steps 64 \
   --per_device_train_batch_size 1 \

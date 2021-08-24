@@ -1,6 +1,8 @@
 import collections
 import inspect
+import logging
 import math
+import numpy as np
 import os
 import random
 import re
@@ -24,9 +26,14 @@ from transformers import Trainer
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from transformers.data.data_collator import DataCollator, DataCollatorWithPadding, default_data_collator
-from transformers.trainer_utils import EvalPrediction, EvalLoopOutput
+from transformers.trainer_utils import EvalPrediction, EvalLoopOutput, denumpify_detensorize
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
+from transformers.file_utils import is_torch_tpu_available
+from transformers.trainer_pt_utils import find_batch_size, nested_concat, nested_numpify, nested_truncate
+
+
+logger = logging.getLogger(__name__)
 
 class LegalTrainer(Trainer):
     def __init__(
@@ -132,7 +139,10 @@ class LegalTrainer(Trainer):
                 losses = self._nested_gather(loss.repeat(batch_size))
                 losses_host = losses if losses_host is None else torch.cat((losses_host, losses), dim=0)
             if logits is not None:
-                logits = np.argmax(logits, axis=-1)
+                # take first index of logits for GPT only
+                # TODO: figure out a way to specify GPT here
+                logits = self._pad_across_processes(logits[0])
+                logits = self._nested_gather(logits)
                 preds_host = logits if preds_host is None else nested_concat(preds_host, logits, padding_index=-100)
             if labels is not None:
                 labels = self._pad_across_processes(labels)

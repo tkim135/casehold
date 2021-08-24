@@ -1,4 +1,4 @@
-python multiple_choice/run_multiple_choice.py \
+python multiple_choice/bert_mc_legaltrainer.py \
   --task_name casehold \
   --model_name_or_path zlucia/legalbert \
   --data_dir data/casehold \
@@ -11,4 +11,10 @@ python multiple_choice/run_multiple_choice.py \
   --num_train_epochs=3.0 \
   --output_dir logs/casehold/legalbert \
   --overwrite_output_dir \
-  --logging_steps 1000
+  --logging_steps 1 \
+  --gradient_accumulation_steps 64 \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
+  --evaluation_strategy steps \
+  --eval_steps 5000 \
+  --overwrite_cache False

@@ -18,8 +18,6 @@ from transformers import (
 	AutoTokenizer,
 	EvalPrediction,
 	HfArgumentParser,
-        Seq2SeqTrainer,
-        Seq2SeqTrainingArguments,
 	Trainer,
 	TrainingArguments,
 	set_seed,
@@ -78,7 +76,7 @@ def main():
 	# or by passing the --help flag to this script.
 	# We now keep distinct sets of args, for a cleaner separation of concerns.
 
-	parser = HfArgumentParser((ModelArguments, DataTrainingArguments, Seq2SeqTrainingArguments))
+	parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
 	# Add custom arguments for computing pre-train loss
 	parser.add_argument("--ptl", type=bool, default=False)
 	model_args, data_args, training_args, custom_args = parser.parse_args_into_dataclasses()
@@ -137,19 +135,12 @@ def main():
 		# Default fast tokenizer is buggy on CaseHOLD task, switch to legacy tokenizer
 		use_fast=False,
 	)
-	#model = AutoModelForMultipleChoice.from_pretrained(
-	#	model_args.model_name_or_path,
-	#	from_tf=bool(".ckpt" in model_args.model_name_or_path),
-	#	config=config,
-	#	cache_dir=model_args.cache_dir,
-	#)
-	tokenizer.pad_token = tokenizer.eos_token
-	model = GPT2ForMultipleChoice.from_pretrained(
+	model = AutoModelForMultipleChoice.from_pretrained(
 		model_args.model_name_or_path,
 		from_tf=bool(".ckpt" in model_args.model_name_or_path),
 		config=config,
-		cache_dir=model_args.cache_dir,)
-	model.config.pad_token_id = model.config.eos_token_id
+		cache_dir=model_args.cache_dir,
+	)
 	train_dataset = None
 	eval_dataset = None
 
@@ -202,7 +193,7 @@ def main():
 		return f1
 
 	# Initialize our Trainer
-	trainer = Seq2SeqTrainer(
+	trainer = LegalTrainer(
 		model=model,
 		args=training_args,
 		train_dataset=train_dataset,

@@ -16,4 +16,5 @@ python3 multiple_choice/run_multiple_choice.py \
   --per_device_train_batch_size 1 \
   --per_device_eval_batch_size 1 \
   --evaluation_strategy steps \
-  --eval_steps 5000
+  --eval_steps 5000 \
+  --overwrite_cache False
