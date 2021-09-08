@@ -130,8 +130,6 @@ def main():
         finetuning_task=data_args.task_name,
         cache_dir=model_args.cache_dir,
     )
-        # modify config size for TADP finetune
-    config.vocab_size = 50260
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
@@ -140,6 +138,7 @@ def main():
     )
     tokenizer.pad_token = tokenizer.eos_token
     checkpoint = torch.load(custom_args.weight)
+    checkpoint['transformer.wte.weight'] = checkpoint['transformer.wte.weight'][:50257,:]
     tensor_names = ["attn.c_attn.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':
         for i in range(48):
