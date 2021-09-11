@@ -138,14 +138,13 @@ def main():
     )
     tokenizer.pad_token = tokenizer.eos_token
     checkpoint = torch.load(custom_args.weight)
-    checkpoint['transformer.wte.weight'] = checkpoint['transformer.wte.weight'][:50257,:]
-    tensor_names = ["attn.c_attn.weight", "attn.c_proj.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
+    tensor_names = ["attn.c_attn.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':
         for i in range(48):
             for tensor_name in tensor_names:
                 full_tensor_name = f"transformer.h.{i}.{tensor_name}"
                 checkpoint[full_tensor_name] = torch.transpose(checkpoint[full_tensor_name], 0, 1)
-    #hf_model = GPT2ForMultipleChoice.from_pretrained(
+    #model = GPT2ForMultipleChoice.from_pretrained(
     #    model_args.model_name_or_path,
     #    from_tf=bool(".ckpt" in model_args.model_name_or_path),
     #    config=config,
@@ -155,6 +154,7 @@ def main():
         state_dict=checkpoint,
         config=config,
     )
+    import pdb; pdb.set_trace()
     model.config.pad_token_id = model.config.eos_token_id
     train_dataset = None
     eval_dataset = None

@@ -138,23 +138,27 @@ def main():
     )
     tokenizer.pad_token = tokenizer.eos_token
     checkpoint = torch.load(custom_args.weight)
-    checkpoint['transformer.wte.weight'] = checkpoint['transformer.wte.weight'][:50257,:]
     tensor_names = ["attn.c_attn.weight", "attn.c_proj.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':
         for i in range(48):
             for tensor_name in tensor_names:
                 full_tensor_name = f"transformer.h.{i}.{tensor_name}"
+                print(tensor_name, checkpoint[full_tensor_name].shape)
                 checkpoint[full_tensor_name] = torch.transpose(checkpoint[full_tensor_name], 0, 1)
-    #hf_model = GPT2ForMultipleChoice.from_pretrained(
-    #    model_args.model_name_or_path,
-    #    from_tf=bool(".ckpt" in model_args.model_name_or_path),
-    #    config=config,
-    #    cache_dir=model_args.cache_dir,)
+    import pdb; pdb.set_trace()
+    hf_model = GPT2ForMultipleChoice.from_pretrained(
+        model_args.model_name_or_path,
+        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        config=config,
+        cache_dir=model_args.cache_dir,)
+    hf_checkpoint = torch.load("pytorch_model.bin")
     model = GPT2ForMultipleChoice.from_pretrained(
+        #"pytorch_model.bin",
         pretrained_model_name_or_path=None,
         state_dict=checkpoint,
         config=config,
     )
+    #model.load_state_dict(hf_checkpoint, strict=False)
     model.config.pad_token_id = model.config.eos_token_id
     train_dataset = None
     eval_dataset = None
