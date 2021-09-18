@@ -1,4 +1,4 @@
-python3 multiple_choice/run_mc_50257legaltrainer.py \
+python3 multiple_choice/test_mc_new50257.py \
   --task_name casehold \
   --model_name_or_path gpt2-xl \
   --data_dir data/casehold \
@@ -6,9 +6,9 @@ python3 multiple_choice/run_mc_50257legaltrainer.py \
   --do_eval \
   --evaluation_strategy steps \
   --max_seq_length 128 \
-  --learning_rate 1e-5 \
+  --learning_rate 5e-6 \
   --num_train_epochs 3.0 \
-  --output_dir logs/casehold/bs64_50260to50257_1e-5_001 \
+  --output_dir logs/casehold/tadp_wd05_lr9e-6_ft_5e-6_05 \
   --overwrite_output_dir \
   --overwrite_cache False \
   --logging_steps 1 \
@@ -16,7 +16,7 @@ python3 multiple_choice/run_mc_50257legaltrainer.py \
   --per_device_train_batch_size 1 \
   --per_device_eval_batch_size 1 \
   --evaluation_strategy steps \
-  --weight_decay 0.01 \
+  --weight_decay 0.5 \
   --seed 42 \
   --eval_steps 100 \
-  --weight "pytorch_model_lr1e-5_wd1.0_ckpt1680.bin"
+  --weight "pytorch_model_50257_decay0.5_lr9e-6.bin"

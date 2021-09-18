@@ -1,4 +1,4 @@
-python3 multiple_choice/test_mc_new50257.py \
+python3 multiple_choice/run_mc_50257legaltrainer.py \
   --task_name casehold \
   --model_name_or_path gpt2-xl \
   --data_dir data/casehold \
@@ -8,15 +8,16 @@ python3 multiple_choice/test_mc_new50257.py \
   --max_seq_length 128 \
   --learning_rate 1e-5 \
   --num_train_epochs 3.0 \
-  --output_dir logs/casehold/50257newhfckpttestTEST \
+  --output_dir logs/casehold/bs8_50257tadp_transposefix_seed125380 \
   --overwrite_output_dir \
   --overwrite_cache False \
   --logging_steps 1 \
-  --gradient_accumulation_steps 64 \
+  --gradient_accumulation_steps 8 \
   --per_device_train_batch_size 1 \
   --per_device_eval_batch_size 1 \
   --evaluation_strategy steps \
   --weight_decay 0.01 \
-  --seed 42 \
+  --seed 125380 \
   --eval_steps 200 \
-  --weight "50257_pytorch_model_exactly_hf.bin"
+  --save_steps 5000 \
+  --weight "pytorch_model_lr1e-5_wd1.0_ckpt1680.bin"
