@@ -138,6 +138,11 @@ def main():
     )
     tokenizer.pad_token = tokenizer.eos_token
     checkpoint = torch.load(custom_args.weight)
+    hf_model = GPT2ForMultipleChoice.from_pretrained(
+        model_args.model_name_or_path,
+        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        config=config,
+        cache_dir=model_args.cache_dir,)
     checkpoint['transformer.wte.weight'] = checkpoint['transformer.wte.weight'][:50257,:]
     tensor_names = ["attn.c_attn.weight", "attn.c_proj.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':
@@ -145,11 +150,6 @@ def main():
             for tensor_name in tensor_names:
                 full_tensor_name = f"transformer.h.{i}.{tensor_name}"
                 checkpoint[full_tensor_name] = torch.transpose(checkpoint[full_tensor_name], 0, 1)
-    #hf_model = GPT2ForMultipleChoice.from_pretrained(
-    #    model_args.model_name_or_path,
-    #    from_tf=bool(".ckpt" in model_args.model_name_or_path),
-    #    config=config,
-    #    cache_dir=model_args.cache_dir,)
     model = GPT2ForMultipleChoice.from_pretrained(
         pretrained_model_name_or_path=None,
         state_dict=checkpoint,
@@ -202,9 +202,13 @@ def main():
     # Define custom compute_metrics function, returns macro F1 metric for CaseHOLD task
     def compute_metrics(p: EvalPrediction):
         preds = np.argmax(p.predictions, axis=1)
-        metric = load_metric("f1")
-        # Compute macro F1 for 5-class CaseHOLD task
-        f1 = metric.compute(predictions=preds, references=p.label_ids, average='macro')
+        f1_metric = load_metric("f1")
+        accuracy_metric = load_metric("accuracy")
+        # Compute macro F1 and accuracy for 5-class CaseHOLD task
+        f1 = f1_metric.compute(predictions=preds, references=p.label_ids, average='macro')
+        accuracy = accuracy_metric.compute(predictions=preds, references=p.label_ids)
+        # combine dictionaries
+        f1.update(accuracy)
         return f1
 
     # Initialize our Trainer

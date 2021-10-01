@@ -14,9 +14,10 @@ import transformers
 from transformers import (
     AutoConfig,
     AutoModelForMultipleChoice,
-        AutoModelForSequenceClassification,
+    AutoModelForSequenceClassification,
     AutoTokenizer,
     EvalPrediction,
+    GPT2Config,
     HfArgumentParser,
     Trainer,
     TrainingArguments,
@@ -26,6 +27,7 @@ from legal_trainer import LegalTrainer
 from transformers.trainer_utils import is_main_process
 from utils_multiple_choice import MultipleChoiceDataset, Split, processors
 from downstream import GPT2ForMultipleChoice
+from GPTTokenizer import GPT2Tokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -124,39 +126,37 @@ def main():
         raise ValueError("Task not found: %s" % (data_args.task_name))
 
     # Load pretrained model and tokenizer
-    config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
-        num_labels=num_labels,
-        finetuning_task=data_args.task_name,
-        cache_dir=model_args.cache_dir,
-    )
-        # modify config size for TADP finetune
-    config.vocab_size = 50260
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
-        cache_dir=model_args.cache_dir,
-        # Default fast tokenizer is buggy on CaseHOLD task, switch to legacy tokenizer
-        use_fast=False,
-    )
-    tokenizer.pad_token = tokenizer.eos_token
+    #config = AutoConfig.from_pretrained(
+    #    model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+    #    num_labels=num_labels,
+    #    finetuning_task=data_args.task_name,
+    #    cache_dir=model_args.cache_dir,
+    #)
+    #tokenizer = AutoTokenizer.from_pretrained(
+    #    model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+    #    cache_dir=model_args.cache_dir,
+    #    # Default fast tokenizer is buggy on CaseHOLD task, switch to legacy tokenizer
+    #    use_fast=False,
+    #)
+    config = GPT2Config.from_pretrained('/home/ubuntu/tonyk/casehold/multiple_choice/config.json')
+    tokenizer = GPT2Tokenizer("/home/ubuntu/tonyk/casehold/multiple_choice/tokenizer.json", pad_to_length=None)
     checkpoint = torch.load(custom_args.weight)
-    tensor_names = ["attn.c_attn.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
+    #hf_model = GPT2ForMultipleChoice.from_pretrained(
+    #    model_args.model_name_or_path,
+    #    from_tf=bool(".ckpt" in model_args.model_name_or_path),
+    #    config=config,
+    #    cache_dir=model_args.cache_dir,)
+    tensor_names = ["attn.c_attn.weight", "attn.c_proj.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':
         for i in range(48):
             for tensor_name in tensor_names:
                 full_tensor_name = f"transformer.h.{i}.{tensor_name}"
                 checkpoint[full_tensor_name] = torch.transpose(checkpoint[full_tensor_name], 0, 1)
-    #model = GPT2ForMultipleChoice.from_pretrained(
-    #    model_args.model_name_or_path,
-    #    from_tf=bool(".ckpt" in model_args.model_name_or_path),
-    #    config=config,
-    #    cache_dir=model_args.cache_dir,)
     model = GPT2ForMultipleChoice.from_pretrained(
         pretrained_model_name_or_path=None,
         state_dict=checkpoint,
         config=config,
     )
-    model.config.pad_token_id = model.config.eos_token_id
     train_dataset = None
     eval_dataset = None
 
@@ -208,6 +208,7 @@ def main():
         # Compute macro F1 and accuracy for 5-class CaseHOLD task
         f1 = f1_metric.compute(predictions=preds, references=p.label_ids, average='macro')
         accuracy = accuracy_metric.compute(predictions=preds, references=p.label_ids)
+        # combine dictionaries
         f1.update(accuracy)
         return f1
 
