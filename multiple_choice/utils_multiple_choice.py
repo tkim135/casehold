@@ -311,15 +311,21 @@ def convert_examples_to_features(
             else:
                 text_b = example.question + " " + ending
 
-            inputs = tokenizer(
-                text_a,
-                text_b,
-                add_special_tokens=True,
-                max_length=max_length,
-                padding="max_length",
-                truncation=True,
-                return_overflowing_tokens=True,
-            )
+            if isinstance(tokenizer, PreTrainedTokenizer):
+                inputs = tokenizer(
+                    text_a,
+                    text_b,
+                    add_special_tokens=True,
+                    max_length=max_length,
+                    padding="max_length",
+                    truncation=True,
+                    return_overflowing_tokens=True,
+                )
+            else:
+                inputs = tokenizer(
+                    text_a,
+                    text_b,
+                )
 
             choices_inputs.append(inputs)
 

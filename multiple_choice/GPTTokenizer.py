@@ -1,3 +1,4 @@
+from collections import defaultdict
 from tokenizers import Tokenizer, Encoding
 import pathlib
 from typing import (
@@ -5,7 +6,8 @@ from typing import (
     Dict,
     List,
     Optional,
-    Union
+    Union,
+    Tuple
 )
 
 class BaseTokenizer(object):
@@ -24,7 +26,7 @@ class BaseTokenizer(object):
         """Hash summarising configuration of an instance.
         """
 
-class GPT2Tokenizer(BaseTokenizer):
+class SN20211005Tokenizer(BaseTokenizer):
 
     def __init__(self,
                  vocab_file : str,
@@ -57,15 +59,37 @@ class GPT2Tokenizer(BaseTokenizer):
         self._configure_padding()
         self._tokenizer.no_truncation()
 
-    def __call__(self, text: Union[str, List[str]]) -> List[Encoding]:
+    def __call__(self, text: Union[str, List[str]], pair: Optional[str] = None) -> List[Encoding]:
+        if pair:
+            if isinstance(text, str):
+                text += self._eos_token
+                pair += self._eos_token
+                text = [(text, pair)]
+        else:
+            if isinstance(text, str):
+                text = [text]
 
-        if isinstance(text, str):
-            text = [text]
+            # Add eos tokens.
+            text = [el + self._eos_token for el in text]
 
-        # Add eos tokens.
-        text = [el + self._eos_token for el in text]
+        encodings = self._tokenizer.encode_batch(text, add_special_tokens=True, is_pretokenized=False)
+        if not pair:
+            return encodings
 
-        return self._tokenizer.encode_batch(text, add_special_tokens=True, is_pretokenized=False)
+        # borrowed from PreTrainedTokenizerFast _batch_encode_plus
+        tokens_and_encodings = [
+            self._convert_encoding(
+                encoding=encoding,
+                return_overflowing_tokens=True,
+            )
+            for encoding in encodings
+        ]
+
+        sanitized_tokens = {}
+        for key in tokens_and_encodings[0][0].keys():
+            stack = [e for item, _ in tokens_and_encodings for e in item[key]]
+            sanitized_tokens[key] = stack
+        return sanitized_tokens
 
     def __len__(self) -> int:
         return self.vocab_size
@@ -146,3 +170,50 @@ class GPT2Tokenizer(BaseTokenizer):
             pad_to_multiple_of=self._pad_to_length
         )
 
+    # borrowed from transformers.tokenization_utils_fast.PreTrainedTokenizerFast
+    def _convert_encoding(
+        self,
+        encoding: Encoding,
+        return_token_type_ids: Optional[bool] = None,
+        return_attention_mask: Optional[bool] = None,
+        return_overflowing_tokens: bool = False,
+        return_special_tokens_mask: bool = False,
+        return_offsets_mapping: bool = False,
+        return_length: bool = False,
+        verbose: bool = True,
+    ) -> Tuple[Dict[str, Any], List[Encoding]]:
+        """
+        Convert the encoding representation (from low-level HuggingFace tokenizer output) to a python Dict and a list
+        of encodings, take care of building a batch from overflowing tokens.
+
+        Overflowing tokens are converted to additional examples (like batches) so the output values of the dict are
+        lists (overflows) of lists (tokens).
+
+        Output shape: (overflows, sequence length)
+        """
+        if return_token_type_ids is None:
+            return_token_type_ids = True #"token_type_ids" in self.model_input_names
+        if return_attention_mask is None:
+            return_attention_mask = True #"attention_mask" in self.model_input_names
+
+        if return_overflowing_tokens and encoding.overflowing is not None:
+            encodings = [encoding] + encoding.overflowing
+        else:
+            encodings = [encoding]
+
+        encoding_dict = defaultdict(list)
+        for e in encodings:
+            encoding_dict["input_ids"].append(e.ids)
+
+            if return_token_type_ids:
+                encoding_dict["token_type_ids"].append(e.type_ids)
+            if return_attention_mask:
+                encoding_dict["attention_mask"].append(e.attention_mask)
+            if return_special_tokens_mask:
+                encoding_dict["special_tokens_mask"].append(e.special_tokens_mask)
+            if return_offsets_mapping:
+                encoding_dict["offset_mapping"].append(e.offsets)
+            if return_length:
+                encoding_dict["length"].append(len(e.ids))
+
+        return encoding_dict, encodings

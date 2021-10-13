@@ -27,7 +27,7 @@ from legal_trainer import LegalTrainer
 from transformers.trainer_utils import is_main_process
 from utils_multiple_choice import MultipleChoiceDataset, Split, processors
 from downstream import GPT2ForMultipleChoice
-from GPTTokenizer import GPT2Tokenizer
+from GPTTokenizer import SN20211005Tokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -126,26 +126,9 @@ def main():
         raise ValueError("Task not found: %s" % (data_args.task_name))
 
     # Load pretrained model and tokenizer
-    #config = AutoConfig.from_pretrained(
-    #    model_args.config_name if model_args.config_name else model_args.model_name_or_path,
-    #    num_labels=num_labels,
-    #    finetuning_task=data_args.task_name,
-    #    cache_dir=model_args.cache_dir,
-    #)
-    #tokenizer = AutoTokenizer.from_pretrained(
-    #    model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
-    #    cache_dir=model_args.cache_dir,
-    #    # Default fast tokenizer is buggy on CaseHOLD task, switch to legacy tokenizer
-    #    use_fast=False,
-    #)
-    config = GPT2Config.from_pretrained('/home/ubuntu/tonyk/casehold/multiple_choice/config.json')
-    tokenizer = GPT2Tokenizer("/home/ubuntu/tonyk/casehold/multiple_choice/tokenizer.json", pad_to_length=None)
+    config = GPT2Config.from_pretrained('/import/snvm-pa-scratch2/tonyk/casehold/multiple_choice/config.json')
+    tokenizer = SN20211005Tokenizer("/import/snvm-pa-scratch2/tonyk/casehold/multiple_choice/tokenizer.json", pad_to_length=None)
     checkpoint = torch.load(custom_args.weight)
-    #hf_model = GPT2ForMultipleChoice.from_pretrained(
-    #    model_args.model_name_or_path,
-    #    from_tf=bool(".ckpt" in model_args.model_name_or_path),
-    #    config=config,
-    #    cache_dir=model_args.cache_dir,)
     tensor_names = ["attn.c_attn.weight", "attn.c_proj.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':
         for i in range(48):
