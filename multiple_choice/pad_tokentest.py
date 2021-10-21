@@ -126,8 +126,8 @@ def main():
         raise ValueError("Task not found: %s" % (data_args.task_name))
 
     # Load pretrained model and tokenizer
-    config = GPT2Config.from_pretrained('/import/snvm-pa-scratch2/tonyk/casehold/multiple_choice/config.json')
-    tokenizer = SN20211005Tokenizer("/import/snvm-pa-scratch2/tonyk/casehold/multiple_choice/tokenizer.json", pad_to_length=None)
+    config = GPT2Config.from_pretrained('multiple_choice/config.json')
+    tokenizer = SN20211005Tokenizer("multiple_choice/tokenizer.json", pad_to_length=None)
     checkpoint = torch.load(custom_args.weight)
     tensor_names = ["attn.c_attn.weight", "attn.c_proj.weight", "mlp.c_fc.weight", "mlp.c_proj.weight"]
     if model_args.model_name_or_path == 'gpt2-xl':

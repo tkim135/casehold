@@ -36,9 +36,10 @@ class SN20211005Tokenizer(BaseTokenizer):
                  eos_token: str = '\n\n',
                  pad_token: Optional[str] = '<|padtoken|>',  # If None do not pad.
                  pad_direction: str = 'right',
-                 pad_to_length: int = 2048,
+                 pad_to_length: int = 128,
                  ignore_cached: bool = False):
 
+        pad_to_length = 128 # TODO: clean this, only doing because it's None otherwise
         path_to_tokenizer = pathlib.Path(vocab_file) # / f"{name}.{version}.json"
         self._tokenizer = Tokenizer.from_file(path_to_tokenizer.as_posix())
 
@@ -56,21 +57,19 @@ class SN20211005Tokenizer(BaseTokenizer):
             special_tokens.append(pad_token)
         self.add_tokens(special_tokens, special_tokens=True)
 
+        # configure truncation and padding
+        target = {"max_length": pad_to_length, "stride": 0, "strategy": "longest_first"}
+        if self._tokenizer.truncation != target:
+            self._tokenizer.enable_truncation(**target)
         self._configure_padding()
-        self._tokenizer.no_truncation()
 
     def __call__(self, text: Union[str, List[str]], pair: Optional[str] = None) -> List[Encoding]:
         if pair:
             if isinstance(text, str):
-                text += self._eos_token
-                pair += self._eos_token
                 text = [(text, pair)]
         else:
             if isinstance(text, str):
                 text = [text]
-
-            # Add eos tokens.
-            text = [el + self._eos_token for el in text]
 
         encodings = self._tokenizer.encode_batch(text, add_special_tokens=True, is_pretokenized=False)
         if not pair:
@@ -162,7 +161,7 @@ class SN20211005Tokenizer(BaseTokenizer):
             return
 
         self._tokenizer.enable_padding(
-            length=None,
+            length=self._pad_to_length,
             direction=self._pad_direction,
             pad_id=self.pad_token_id,
             pad_type_id=0,
@@ -192,28 +191,38 @@ class SN20211005Tokenizer(BaseTokenizer):
         Output shape: (overflows, sequence length)
         """
         if return_token_type_ids is None:
-            return_token_type_ids = True #"token_type_ids" in self.model_input_names
+            return_token_type_ids = False
         if return_attention_mask is None:
-            return_attention_mask = True #"attention_mask" in self.model_input_names
+            return_attention_mask = True
 
-        if return_overflowing_tokens and encoding.overflowing is not None:
-            encodings = [encoding] + encoding.overflowing
-        else:
-            encodings = [encoding]
+        encodings = [encoding]
 
         encoding_dict = defaultdict(list)
-        for e in encodings:
-            encoding_dict["input_ids"].append(e.ids)
-
+        if len(encodings) == 1:
+            encoding_dict["input_ids"] = encodings[0].ids
             if return_token_type_ids:
-                encoding_dict["token_type_ids"].append(e.type_ids)
+                encoding_dict["token_type_ids"] = encodings[0].type_ids
             if return_attention_mask:
-                encoding_dict["attention_mask"].append(e.attention_mask)
+                encoding_dict["attention_mask"] = encodings[0].attention_mask
             if return_special_tokens_mask:
-                encoding_dict["special_tokens_mask"].append(e.special_tokens_mask)
+                encoding_dict["special_tokens_mask"] = encodings[0].special_tokens_mask
             if return_offsets_mapping:
-                encoding_dict["offset_mapping"].append(e.offsets)
+                encoding_dict["offset_mapping"] = encodings[0].offsets
             if return_length:
-                encoding_dict["length"].append(len(e.ids))
+                encoding_dict["length"] = len(encodings[0].ids)
+        else:
+            for e in encodings:
+                encoding_dict["input_ids"].append(e.ids)
+
+                if return_token_type_ids:
+                    encoding_dict["token_type_ids"].append(e.type_ids)
+                if return_attention_mask:
+                    encoding_dict["attention_mask"].append(e.attention_mask)
+                if return_special_tokens_mask:
+                    encoding_dict["special_tokens_mask"].append(e.special_tokens_mask)
+                if return_offsets_mapping:
+                    encoding_dict["offset_mapping"].append(e.offsets)
+                if return_length:
+                    encoding_dict["length"].append(len(e.ids))
 
         return encoding_dict, encodings

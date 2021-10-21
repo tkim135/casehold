@@ -6,9 +6,9 @@ python3 multiple_choice/pad_tokentest.py \
   --do_eval \
   --evaluation_strategy steps \
   --max_seq_length 128 \
-  --learning_rate 2e-6 \
+  --learning_rate 1e-6 \
   --num_train_epochs 1.5 \
-  --output_dir logs/casehold/pad_token_test_tadp2e-6_1_ft_2e-6_1 \
+  --output_dir logs/casehold/pad_token_test_tadp2e-6_1_ft_1e-6_1 \
   --overwrite_output_dir \
   --overwrite_cache False \
   --logging_steps 1 \
@@ -19,5 +19,5 @@ python3 multiple_choice/pad_tokentest.py \
   --weight_decay 1.0 \
   --seed 42 \
   --eval_steps 100 \
-  --save_steps 3972 \
+  --save_steps 1250 \
   --weight "snckpt_model_decay1.0_lr2e-6.bin"
