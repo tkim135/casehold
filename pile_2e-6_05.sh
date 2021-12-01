@@ -7,9 +7,9 @@ python3 multiple_choice/pile_finetune.py \
   --do_eval \
   --evaluation_strategy steps \
   --max_seq_length 128 \
-  --learning_rate 6e-6 \
+  --learning_rate 2e-6 \
   --num_train_epochs 3.0 \
-  --output_dir /import/ml-sc-scratch2/tonyk/legalgpt/a100/logs/casehold/pile_6e-6_05 \
+  --output_dir /import/ml-sc-scratch2/tonyk/legalgpt/a100/logs/casehold/pile_2e-6_05 \
   --overwrite_output_dir \
   --overwrite_cache False \
   --logging_steps 1 \

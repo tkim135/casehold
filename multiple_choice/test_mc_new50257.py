@@ -202,9 +202,13 @@ def main():
     # Define custom compute_metrics function, returns macro F1 metric for CaseHOLD task
     def compute_metrics(p: EvalPrediction):
         preds = np.argmax(p.predictions, axis=1)
-        metric = load_metric("f1")
-        # Compute macro F1 for 5-class CaseHOLD task
-        f1 = metric.compute(predictions=preds, references=p.label_ids, average='macro')
+        f1_metric = load_metric("f1")
+        accuracy_metric = load_metric("accuracy")
+        # Compute macro F1 and accuracy for 5-class CaseHOLD task
+        f1 = f1_metric.compute(predictions=preds, references=p.label_ids, average='macro')
+        accuracy = accuracy_metric.compute(predictions=preds, references=p.label_ids)
+        # combine dictionaries
+        f1.update(accuracy)
         return f1
 
     # Initialize our Trainer
