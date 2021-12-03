@@ -1,0 +1,24 @@
+python3 multiple_choice/pile_finetune.py \
+  --task_name casehold \
+  --model_name_or_path /import/ml-sc-scratch2/tonyk/legalgpt/a100/logs/casehold/TEST1202/pile_2e-6_05/checkpoint-2400 \
+  --data_dir data/casehold \
+  --cache_dir /import/snvm-sc-scratch2/tonyk/TEST1202/.cache \
+  --do_train \
+  --do_eval \
+  --evaluation_strategy steps \
+  --max_seq_length 128 \
+  --learning_rate 2e-6 \
+  --num_train_epochs 2.0 \
+  --output_dir /import/ml-sc-scratch2/tonyk/legalgpt/a100/logs/casehold/TEST1202/continue_pile_2e-6_05 \
+  --overwrite_output_dir \
+  --overwrite_cache False \
+  --logging_steps 1 \
+  --gradient_accumulation_steps 16 \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
+  --evaluation_strategy steps \
+  --weight_decay 0.5 \
+  --seed 42 \
+  --eval_steps 100 \
+  --save_steps 2400 \
+  --weight "/import/ml-sc-scratch2/tonyk/legalgpt/a100/logs/casehold/TEST1202/pile_2e-6_05/checkpoint-2400/pytorch_model.bin"
